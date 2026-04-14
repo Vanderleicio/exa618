@@ -8,7 +8,7 @@ class handler(BaseHTTPRequestHandler):
     # O Vercel procura o método do_PUT automaticamente quando chega um PUT
     def do_PUT(self):
         tamanho_conteudo = int(self.headers.get('Content-Length', 0))
-        conteudo_recebido = self.rfile.read(tamanho_conteudo)
+        conteudo_bytes = self.rfile.read(tamanho_conteudo)
 
         token = os.environ.get('BLOB_READ_WRITE_TOKEN')
         url = 'https://blob.vercel-storage.com/mensagens.txt'
@@ -16,8 +16,6 @@ class handler(BaseHTTPRequestHandler):
             'Authorization': f'Bearer {token}',
             'x-add-random-suffix': 'false'
         }
-
-        conteudo_bytes = self.rfile.read(tamanho_conteudo)
 
         try:
             dados_json = json.loads(conteudo_bytes.decode('utf-8'))
@@ -31,7 +29,7 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write('Erro: Formato JSON invalido.'.encode('utf-8'))
             return
         
-        conteudo_envio = "{{message: {{{msg_salvar}}}, author: {{{author}}}}}"
+        conteudo_envio = f"{{message: {{{msg_salvar}}}, author: {{{author}}}}}"
 
         resposta_blob = requests.put(url, headers=headers, data=conteudo_envio)
         
