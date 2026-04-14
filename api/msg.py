@@ -31,7 +31,7 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write('Erro: Formato JSON invalido.'.encode('utf-8'))
             return
         
-        conteudo_envio = "{{message: {{{message}}}, author: {{{author}}}}}"
+        conteudo_envio = "{{message: {{{msg_salvar}}}, author: {{{author}}}}}"
 
         resposta_blob = requests.put(url, headers=headers, data=conteudo_envio)
         
