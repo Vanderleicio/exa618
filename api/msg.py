@@ -10,7 +10,7 @@ class handler(BaseHTTPRequestHandler):
         conteudo_bytes = self.rfile.read(tamanho_conteudo)
 
         token = os.environ.get('BLOB_READ_WRITE_TOKEN')
-        url = 'https://blob.vercel-storage.com/mensagens.txt'
+        url_blob = 'https://blob.vercel-storage.com/mensagens.txt'
         headers = {
             'Authorization': f'Bearer {token}',
             'x-add-random-suffix': 'false'
@@ -27,8 +27,8 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write('Erro: Formato JSON invalido.'.encode('utf-8'))
             return
         
-        url = 'https://v7s17lsamqlazxke.public.blob.vercel-storage.com/mensagens.txt' 
-        resposta_get = requests.get(url)
+        url_blob_get = 'https://v7s17lsamqlazxke.public.blob.vercel-storage.com/mensagens.txt' 
+        resposta_get = requests.get(url_blob_get)
         
         msgs_hist = ""
         if resposta_get.status_code == 200:
@@ -36,7 +36,7 @@ class handler(BaseHTTPRequestHandler):
         
         texto_final = f"{{message: {{{msg_salvar}}}, author: {{{author}}}}}" + msgs_hist
 
-        resposta_blob = requests.put(url, headers=headers, data=texto_final)
+        resposta_blob = requests.put(url_blob, headers=headers, data=texto_final)
         
         self.send_response(200 if resposta_blob.status_code == 200 else 500)
         self.send_header('Content-type', 'text/plain')
