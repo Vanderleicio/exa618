@@ -32,9 +32,9 @@ class handler(BaseHTTPRequestHandler):
         
         msgs_hist = ""
         if resposta_get.status_code == 200:
-            msgs_hist = resposta_get.text + "\n"
+            msgs_hist = resposta_get.text
         
-        texto_final = f"{{message: {{{msg_salvar}}}, author: {{{author}}}}}" + msgs_hist
+        texto_final = f"{{message: {{{msg_salvar}}}, author: {{{author}}}}}" + "\n" + msgs_hist
 
         resposta_blob = requests.put(url_blob, headers=headers, data=texto_final)
         
