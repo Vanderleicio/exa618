@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler
 import os
 import requests
 import json
+import time
 
 class handler(BaseHTTPRequestHandler):
 
@@ -25,9 +26,11 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(400)
             self.end_headers()
             self.wfile.write('Erro: Formato JSON invalido.'.encode('utf-8'))
-            return
+            return 
         
-        url_blob_get = 'https://v7s17lsamqlazxke.public.blob.vercel-storage.com/mensagens.txt' 
+        agora = time.time()
+        
+        url_blob_get = f'https://v7s17lsamqlazxke.public.blob.vercel-storage.com/mensagens.txt?t={agora}' 
         resposta_get = requests.get(url_blob_get)
         
         msgs_hist = ""
