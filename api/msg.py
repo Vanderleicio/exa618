@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 import os
-import requests
+import redis
 import json
 import time
 
@@ -9,13 +9,6 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         tamanho_conteudo = int(self.headers.get('Content-Length', 0))
         conteudo_bytes = self.rfile.read(tamanho_conteudo)
-
-        token = os.environ.get('BLOB_READ_WRITE_TOKEN')
-        url_blob = 'https://blob.vercel-storage.com/mensagens.txt'
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'x-add-random-suffix': 'false'
-        }
 
         try:
             dados_json = json.loads(conteudo_bytes.decode('utf-8'))
@@ -28,24 +21,37 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write('Erro: Formato JSON invalido.'.encode('utf-8'))
             return 
         
-        agora = time.time()
-        
-        url_blob_get = f'https://v7s17lsamqlazxke.public.blob.vercel-storage.com/mensagens.txt?t={agora}' 
-        resposta_get = requests.get(url_blob_get)
-        
-        msgs_hist = ""
-        if resposta_get.status_code == 200:
-            msgs_hist = resposta_get.text
-        
-        texto_final = f"{{message: {{{msg_salvar}}}, author: {{{author}}}}}" + "\n" + msgs_hist
+        banco_kv = redis.from_url(os.environ.get("KV_URL"))
 
-        resposta_blob = requests.put(url_blob, headers=headers, data=texto_final)
-        
-        self.send_response(200 if resposta_blob.status_code == 200 else 500)
-        self.send_header('Content-type', 'text/plain')
+        nova_mensagem = json.dumps({"message": msg_salvar, "author": author}, ensure_ascii=False)
+            
+        banco_kv.lpush("lista_mensagens", nova_mensagem)
+            
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json; charset=utf-8')
         self.end_headers()
-        
-        if resposta_blob.status_code == 200:
-            self.wfile.write('Salvo com sucesso!'.encode('utf-8'))
-        else:
-            self.wfile.write('Erro ao salvar.'.encode('utf-8'))
+        resposta = json.dumps({"status": "sucesso", "mensagem": "Guardado com sucesso"})
+        self.wfile.write(resposta.encode('utf-8'))
+    
+    def do_GET(self):
+        try:
+            banco_kv = redis.from_url(os.environ.get("KV_URL"))
+            
+            mensagens_bytes = banco_kv.lrange("lista_mensagens", 0, -1)
+            
+            lista_final = []
+            for msg_bytes in mensagens_bytes:
+                msg_dict = json.loads(msg_bytes.decode('utf-8'))
+                lista_final.append(msg_dict)
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.end_headers()
+            
+            resposta = json.dumps({"mensagens": lista_final}, ensure_ascii=False)
+            self.wfile.write(resposta.encode('utf-8'))
+            
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(f'{{"erro": "Erro interno ao ler: {str(e)}"}}'.encode('utf-8'))
