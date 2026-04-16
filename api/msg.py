@@ -6,7 +6,7 @@ import time
 
 class handler(BaseHTTPRequestHandler):
 
-    def do_PUT(self):
+    def do_POST(self):
         tamanho_conteudo = int(self.headers.get('Content-Length', 0))
         conteudo_bytes = self.rfile.read(tamanho_conteudo)
 
